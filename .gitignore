@@ -1,0 +1,4 @@
+.envANTHROPIC_API_KEY=sk-ant-api03-pfhQSni_IPz4zfLrJ8deHIVQzHLV4pyNMFK43ffmRRVsmoWnK0ORdE-THjFqMlo_hVTdAXjTMpMxgQNhxXEbCyg-Q7z3RwAA
+__pycache__/
+*.pyc
+.venv/
