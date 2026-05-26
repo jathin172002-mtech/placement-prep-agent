@@ -1,0 +1,58 @@
+{
+  "timestamp": "20260526_075043",
+  "company": "Google",
+  "role": "SDE-1",
+  "profile": {
+    "company_name": "Google",
+    "founded": "1998",
+    "headquarters": "Mountain View, USA",
+    "tech_stack": [
+      "Java",
+      "Python",
+      "C++",
+      "JavaScript",
+      "Cloud Computing"
+    ],
+    "known_for": "Google is known for being a leader in the technology industry, specializing in Internet-related services and products.",
+    "interview_rounds": [
+      "Recruiter screen",
+      "Online coding assessment",
+      "Technical phone interview",
+      "Virtual onsite interview"
+    ],
+    "key_topics": [
+      "Data structures and algorithms",
+      "System design",
+      "Object-oriented programming",
+      "Cloud computing",
+      "Machine learning"
+    ],
+    "difficulty": "high",
+    "tips": [
+      "Practice coding on platforms like LeetCode and HackerRank",
+      "Review system design concepts and be prepared to design large-scale systems",
+      "Be familiar with Google's products and services, and be prepared to answer behavioral questions"
+    ]
+  },
+  "questions": {
+    "questions": [
+      "Design a scalable system for a social media platform to handle a large number of users and their interactions",
+      "Explain the trade-offs between monolithic architecture and microservices architecture in a cloud-based system",
+      "Write a Java program to find the first duplicate in an array of integers",
+      "How would you optimize the performance of a slow SQL query in a database?",
+      "Describe the differences between supervised and unsupervised machine learning algorithms",
+      "Implement a queue using two stacks in Python",
+      "Design a recommendation system for an e-commerce website using collaborative filtering",
+      "Explain the concept of encapsulation in object-oriented programming and provide an example in C++",
+      "How would you handle a cloud computing security breach, and what measures would you take to prevent it?",
+      "Write a JavaScript function to find the maximum sum of a subarray within a given array of integers"
+    ],
+    "topics_covered": [
+      "System design",
+      "Data structures and algorithms",
+      "Object-oriented programming",
+      "Cloud computing",
+      "Machine learning"
+    ]
+  }
+}

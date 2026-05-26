@@ -1,0 +1,48 @@
+{
+  "timestamp": "20260518_155744",
+  "company": "Google",
+  "role": "software developer",
+  "conversation": [
+    {
+      "role": "user",
+      "content": "I am preparing for software developer role at Google. Please start the interview."
+    },
+    {
+      "role": "assistant",
+      "content": "For a software developer role at Google, here's your first question:\n\n1. How would you implement a hash table from scratch in a programming language of your choice, and what would be the time and space complexity of your implementation?\n\nPlease go ahead and answer. I'll provide feedback on your response."
+    },
+    {
+      "role": "user",
+      "content": "A hash table uses an array with a hash function to map keys to indices. "
+    },
+    {
+      "role": "assistant",
+      "content": "That's a good start. You've identified the basic components of a hash table, which is an array and a hash function that maps keys to indices. However, your answer is a bit brief and lacks details about the actual implementation, such as collision resolution and the specific hash function used. \n\nLet's move on to the next question:\n\n2. Given a sorted array of integers, how would you find the first occurrence of a target element in the array using an efficient algorithm, and what would be the time complexity of your solution?"
+    },
+    {
+      "role": "user",
+      "content": "For collisions I would use chaining with linked lists. "
+    },
+    {
+      "role": "assistant",
+      "content": "Using chaining with linked lists is a good approach to handle collisions in a hash table. This method allows for efficient storage and retrieval of colliding elements. However, it would be even better if you could elaborate on how you would implement the linked lists, such as how you would create new nodes and update the head of the list when a collision occurs.\n\nLet's move on to the next question:\n\n3. Write a function to reverse a singly linked list, and explain the steps involved in the process, including any necessary pointer updates."
+    },
+    {
+      "role": "user",
+      "content": "Time complexity for insert and search is O(1) average and O(n) worst case. "
+    },
+    {
+      "role": "assistant",
+      "content": "That's correct. The average time complexity for insert and search operations in a hash table is indeed O(1), assuming a good hash function is used and the load factor is kept within reasonable bounds. However, in the worst-case scenario, such as when all keys collide, the time complexity can degrade to O(n), where n is the number of elements in the table. It's great that you acknowledged both the average and worst-case scenarios.\n\nLet's move on to the next question:\n\n4. Given a string, write a function to determine if it is a palindrome, ignoring non-alphanumeric characters and case sensitivity. How would you approach this problem, and what data structures or algorithms would you use?"
+    },
+    {
+      "role": "user",
+      "content": "Space complexity is O(n)."
+    },
+    {
+      "role": "assistant",
+      "content": "The space complexity of a hash table is indeed O(n), where n is the number of elements stored in the table. This is because each element requires a constant amount of space to store its key, value, and any additional metadata, such as pointers for collision resolution.\n\nLet's move on to the next question:\n\n5. Suppose you have two large arrays of integers, one sorted in ascending order and the other in descending order. How would you merge these two arrays into a single sorted array in ascending order, and what would be the time and space complexity of your solution?"
+    }
+  ],
+  "summary": {}
+}

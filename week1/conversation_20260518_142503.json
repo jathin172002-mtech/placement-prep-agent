@@ -1,0 +1,34 @@
+[
+  {
+    "role": "user",
+    "content": "Hi i am jathin"
+  },
+  {
+    "role": "assistant",
+    "content": "Hello Jathin, it's nice to meet you. Is there something I can help you with or would you like to chat?"
+  },
+  {
+    "role": "user",
+    "content": "my friend name is ujwal"
+  },
+  {
+    "role": "assistant",
+    "content": "That's a nice name. Ujwal is a unique and interesting name. Does Ujwal have any hobbies or interests that you'd like to share? Or would you like to talk about something else? I'm all ears!"
+  },
+  {
+    "role": "user",
+    "content": "ujwal friend is rahul"
+  },
+  {
+    "role": "assistant",
+    "content": "So, Ujwal has a friend named Rahul. It sounds like you have a nice group of friends. Do you, Jathin, Ujwal, and Rahul often hang out together or do things as a group?"
+  },
+  {
+    "role": "user",
+    "content": "what is the first name i told u"
+  },
+  {
+    "role": "assistant",
+    "content": "The first name you told me was \"Jathin\", which is your name."
+  }
+]
