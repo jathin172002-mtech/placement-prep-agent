@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .venv/
 week3/chroma_db/
+week4/agent_memory.db
+week6/chroma_db/
