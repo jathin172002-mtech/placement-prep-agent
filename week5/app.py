@@ -1,3 +1,4 @@
+import sentry_sdk
 import streamlit as st
 import json
 from langchain_groq import ChatGroq
@@ -8,6 +9,11 @@ from langchain_core.messages import HumanMessage, AIMessage
 from pydantic import BaseModel, Field
 from typing import Literal
 from dotenv import load_dotenv
+
+sentry_sdk.init(
+    dsn="https://a00924a89802df29f0db1ab7add3ca73@o4511535825158144.ingest.us.sentry.io/4511535843704832",
+    traces_sample_rate=1.0,
+)
 
 load_dotenv()
 
@@ -143,6 +149,7 @@ if page == "Research":
                         data = {"profile": profile, "questions": questions}
                         st.session_state.researched_companies[key] = data
                     except Exception as e:
+                        sentry_sdk.capture_exception(e)
                         st.error(f"Error: {str(e)}")
                         st.stop()
 
@@ -206,10 +213,14 @@ elif page == "Chat":
             st.write(question)
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                response = chat_with_agent(
-                    company, role, question,
-                    st.session_state.chat_history
-                )
+                try:
+                    response = chat_with_agent(
+                        company, role, question,
+                        st.session_state.chat_history
+                    )
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    response = f"Error: {str(e)}"
             st.write(response)
             st.session_state.chat_history.append(AIMessage(content=response))
 
@@ -264,7 +275,11 @@ elif page == "My Companies":
                     "Give a clear recommendation in 3-4 sentences."
                 )
                 chain = prompt | llm | parser
-                recommendation = chain.invoke({
-                    "profiles": json.dumps(profiles, indent=2)
-                })
+                try:
+                    recommendation = chain.invoke({
+                        "profiles": json.dumps(profiles, indent=2)
+                    })
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    recommendation = f"Error: {str(e)}"
                 st.success(clean(recommendation))

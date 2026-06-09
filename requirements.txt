@@ -11,3 +11,4 @@ sentence-transformers
 langgraph
 streamlit
 pytest
+sentry-sdk
