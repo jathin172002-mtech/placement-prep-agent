@@ -23,6 +23,11 @@ llm = ChatGroq(model="qwen/qwen3-32b")
 parser = StrOutputParser()
 search = TavilySearch(max_results=3)
 
+# Rate limiting constants
+MAX_REQUESTS_PER_SESSION = 10
+MAX_TOKENS_PER_SESSION = 50000
+COST_PER_TOKEN = 0.00000059
+
 class CompanyProfile(BaseModel):
     company_name: str = Field(description="Company name")
     difficulty: Literal["low", "medium", "high"] = Field(description="Interview difficulty")
@@ -40,6 +45,9 @@ def parse_json(text):
     start = text.find("{")
     end = text.rfind("}") + 1
     return json.loads(text[start:end])
+
+def estimate_tokens(text):
+    return len(text) // 4
 
 def research_company(company, role):
     query = f"{company} {role} interview process 2024"
@@ -62,6 +70,8 @@ def research_company(company, role):
         "content": content[:2000],
         "format_instructions": json_parser.get_format_instructions()
     })
+    tokens = estimate_tokens(content[:2000] + raw)
+    st.session_state.total_tokens += tokens
     return parse_json(raw)
 
 def generate_questions(company, role, profile):
@@ -76,6 +86,8 @@ def generate_questions(company, role, profile):
         "role": role,
         "profile": json.dumps(profile)
     })
+    tokens = estimate_tokens(json.dumps(profile) + result)
+    st.session_state.total_tokens += tokens
     return clean(result)
 
 def chat_with_agent(company, role, question, history):
@@ -96,6 +108,8 @@ def chat_with_agent(company, role, question, history):
         "history": history_text,
         "question": question
     })
+    tokens = estimate_tokens(history_text + question + result)
+    st.session_state.total_tokens += tokens
     return clean(result)
 
 st.set_page_config(
@@ -112,6 +126,10 @@ if "current_company" not in st.session_state:
     st.session_state.current_company = None
 if "current_role" not in st.session_state:
     st.session_state.current_role = None
+if "total_tokens" not in st.session_state:
+    st.session_state.total_tokens = 0
+if "request_count" not in st.session_state:
+    st.session_state.request_count = 0
 
 st.sidebar.title("Placement Prep Agent")
 page = st.sidebar.radio("Navigate", ["Research", "Chat", "My Companies"])
@@ -121,6 +139,16 @@ if st.session_state.current_company:
         f"Current: {st.session_state.current_company} "
         f"{st.session_state.current_role}"
     )
+
+# Cost dashboard in sidebar
+st.sidebar.divider()
+st.sidebar.subheader("📊 Usage Dashboard")
+tokens_used = st.session_state.total_tokens
+cost = tokens_used * COST_PER_TOKEN
+st.sidebar.write(f"🔢 Tokens used: {tokens_used:,}")
+st.sidebar.write(f"💰 Est. cost: ${cost:.4f}")
+st.sidebar.write(f"🔍 Requests: {st.session_state.request_count}/{MAX_REQUESTS_PER_SESSION}")
+st.sidebar.progress(min(tokens_used / MAX_TOKENS_PER_SESSION, 1.0))
 
 if page == "Research":
     st.title("Research a Company")
@@ -135,6 +163,10 @@ if page == "Research":
     if st.button("Research", type="primary"):
         if not company or not role:
             st.error("Please enter both company and role!")
+        elif st.session_state.request_count >= MAX_REQUESTS_PER_SESSION:
+            st.error("⚠️ You've reached the maximum of 10 research requests per session. Please refresh to start a new session.")
+        elif st.session_state.total_tokens >= MAX_TOKENS_PER_SESSION:
+            st.error("⚠️ Token limit reached for this session. Please refresh to start a new session.")
         else:
             key = f"{company}_{role}"
             if key in st.session_state.researched_companies:
@@ -150,6 +182,7 @@ if page == "Research":
                         status.update(label="Research complete!", state="complete")
                         data = {"profile": profile, "questions": questions}
                         st.session_state.researched_companies[key] = data
+                        st.session_state.request_count += 1
                     except Exception as e:
                         sentry_sdk.capture_exception(e)
                         st.error(f"Error: {str(e)}")
