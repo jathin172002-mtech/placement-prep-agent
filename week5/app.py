@@ -8,6 +8,7 @@ sentry_sdk.init(
 
 import streamlit as st
 import json
+import re
 from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 from langchain_core.prompts import ChatPromptTemplate
@@ -27,6 +28,33 @@ search = TavilySearch(max_results=3)
 MAX_REQUESTS_PER_SESSION = 10
 MAX_TOKENS_PER_SESSION = 50000
 COST_PER_TOKEN = 0.00000059
+
+# Security - prompt injection patterns
+INJECTION_PATTERNS = [
+    "ignore all previous",
+    "ignore previous instructions",
+    "disregard",
+    "you are now",
+    "act as",
+    "jailbreak",
+    "dan mode",
+    "pretend you",
+    "forget everything",
+    "new instructions",
+]
+
+def validate_input(text, field_name="Input", max_length=100):
+    if not text or not text.strip():
+        return False, f"{field_name} cannot be empty."
+    if len(text) > max_length:
+        return False, f"{field_name} must be under {max_length} characters."
+    if not re.match(r"^[a-zA-Z0-9\s\-\.\,\&]+$", text):
+        return False, f"{field_name} contains invalid characters."
+    text_lower = text.lower()
+    for pattern in INJECTION_PATTERNS:
+        if pattern in text_lower:
+            return False, f"Invalid input detected in {field_name}."
+    return True, ""
 
 class CompanyProfile(BaseModel):
     company_name: str = Field(description="Company name")
@@ -119,6 +147,22 @@ st.set_page_config(
     layout="wide"
 )
 
+# Password gate
+PASSWORD = st.secrets.get("APP_PASSWORD", None)
+if PASSWORD:
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+    if not st.session_state.authenticated:
+        st.title("🔐 Placement Prep Agent")
+        pwd = st.text_input("Enter password to access the app:", type="password")
+        if st.button("Login"):
+            if pwd == PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Incorrect password!")
+        st.stop()
+
 if "researched_companies" not in st.session_state:
     st.session_state.researched_companies = {}
 if "chat_history" not in st.session_state:
@@ -164,64 +208,72 @@ if page == "Research":
     if st.button("Research", type="primary"):
         if not company or not role:
             st.error("Please enter both company and role!")
-        elif st.session_state.request_count >= MAX_REQUESTS_PER_SESSION:
-            st.error("⚠️ You've reached the maximum of 10 research requests per session. Please refresh to start a new session.")
-        elif st.session_state.total_tokens >= MAX_TOKENS_PER_SESSION:
-            st.error("⚠️ Token limit reached for this session. Please refresh to start a new session.")
         else:
-            key = f"{company}_{role}"
-            if key in st.session_state.researched_companies:
-                st.info("Loaded from cache!")
-                data = st.session_state.researched_companies[key]
+            valid_company, err_company = validate_input(company, "Company name")
+            valid_role, err_role = validate_input(role, "Role")
+
+            if not valid_company:
+                st.error(f"⚠️ {err_company}")
+            elif not valid_role:
+                st.error(f"⚠️ {err_role}")
+            elif st.session_state.request_count >= MAX_REQUESTS_PER_SESSION:
+                st.error("⚠️ You've reached the maximum of 10 research requests per session. Please refresh to start a new session.")
+            elif st.session_state.total_tokens >= MAX_TOKENS_PER_SESSION:
+                st.error("⚠️ Token limit reached for this session. Please refresh to start a new session.")
             else:
-                with st.status(f"Researching {company} {role}...") as status:
-                    st.write("Searching the web...")
-                    try:
-                        profile = research_company(company, role)
-                        st.write("Generating questions...")
-                        questions = generate_questions(company, role, json.dumps(profile))
-                        status.update(label="Research complete!", state="complete")
-                        data = {"profile": profile, "questions": questions}
-                        st.session_state.researched_companies[key] = data
-                        st.session_state.request_count += 1
-                    except Exception as e:
-                        sentry_sdk.capture_exception(e)
-                        st.error(f"Error: {str(e)}")
-                        st.stop()
+                key = f"{company}_{role}"
+                if key in st.session_state.researched_companies:
+                    st.info("Loaded from cache!")
+                    data = st.session_state.researched_companies[key]
+                else:
+                    with st.status(f"Researching {company} {role}...") as status:
+                        st.write("Searching the web...")
+                        try:
+                            profile = research_company(company, role)
+                            st.write("Generating questions...")
+                            questions = generate_questions(company, role, json.dumps(profile))
+                            status.update(label="Research complete!", state="complete")
+                            data = {"profile": profile, "questions": questions}
+                            st.session_state.researched_companies[key] = data
+                            st.session_state.request_count += 1
+                        except Exception as e:
+                            sentry_sdk.capture_exception(e)
+                            st.error(f"Error: {str(e)}")
+                            st.stop()
 
-            st.session_state.current_company = company
-            st.session_state.current_role = role
-            st.session_state.chat_history = []
+                st.session_state.current_company = company
+                st.session_state.current_role = role
+                st.session_state.chat_history = []
 
-            profile = data["profile"]
-            questions = data["questions"]
+                profile = data["profile"]
+                questions = data["questions"]
 
-            st.subheader(f"{company} - {role} Profile")
+                st.subheader(f"{company} - {role} Profile")
 
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Difficulty", profile.get("difficulty", "N/A").upper())
-            with col2:
-                st.metric("Interview Rounds", len(profile.get("rounds", [])))
-            with col3:
-                st.metric("Key Topics", len(profile.get("key_topics", [])))
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Difficulty", profile.get("difficulty", "N/A").upper())
+                with col2:
+                    st.metric("Interview Rounds", len(profile.get("rounds", [])))
+                with col3:
+                    st.metric("Key Topics", len(profile.get("key_topics", [])))
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.subheader("Interview Rounds")
-                for i, round_name in enumerate(profile.get("rounds", []), 1):
-                    st.write(f"{i}. {round_name}")
-                st.subheader("Key Topics")
-                for topic in profile.get("key_topics", []):
-                    st.write(f"• {topic}")
-            with col2:
-                st.subheader("Preparation Tips")
-                for i, tip in enumerate(profile.get("tips", []), 1):
-                    st.info(f"Tip {i}: {tip}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.subheader("Interview Rounds")
+                    for i, round_name in enumerate(profile.get("rounds", []), 1):
+                        st.write(f"{i}. {round_name}")
+                    st.subheader("Key Topics")
+                    for topic in profile.get("key_topics", []):
+                        st.write(f"• {topic}")
+                with col2:
+                    st.subheader("Preparation Tips")
+                    for i, tip in enumerate(profile.get("tips", []), 1):
+                        st.info(f"Tip {i}: {tip}")
 
-            st.subheader("Interview Questions")
-            st.write(questions)
-            st.success(f"Go to Chat page to ask follow-up questions about {company}!")
+                st.subheader("Interview Questions")
+                st.write(questions)
+                st.success(f"Go to Chat page to ask follow-up questions about {company}!")
 
 elif page == "Chat":
     st.title("Chat with Your Agent")
@@ -244,21 +296,25 @@ elif page == "Chat":
                 st.write(message.content)
 
     if question := st.chat_input("Ask anything about this company's interviews..."):
-        st.session_state.chat_history.append(HumanMessage(content=question))
-        with st.chat_message("user"):
-            st.write(question)
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    response = chat_with_agent(
-                        company, role, question,
-                        st.session_state.chat_history
-                    )
-                except Exception as e:
-                    sentry_sdk.capture_exception(e)
-                    response = f"Error: {str(e)}"
-            st.write(response)
-            st.session_state.chat_history.append(AIMessage(content=response))
+        valid_q, err_q = validate_input(question, "Question", max_length=500)
+        if not valid_q:
+            st.error(f"⚠️ {err_q}")
+        else:
+            st.session_state.chat_history.append(HumanMessage(content=question))
+            with st.chat_message("user"):
+                st.write(question)
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    try:
+                        response = chat_with_agent(
+                            company, role, question,
+                            st.session_state.chat_history
+                        )
+                    except Exception as e:
+                        sentry_sdk.capture_exception(e)
+                        response = f"Error: {str(e)}"
+                st.write(response)
+                st.session_state.chat_history.append(AIMessage(content=response))
 
 elif page == "My Companies":
     st.title("My Researched Companies")
