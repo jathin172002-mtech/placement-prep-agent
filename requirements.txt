@@ -1,6 +1,9 @@
- httpx
+httpx
 python-dotenv
-google-genai 
+google-genai
 langchain
 langchain-groq
 langchain-community
+langchain-tavily
+streamlit
+chromadb
