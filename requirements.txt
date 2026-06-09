@@ -1,9 +1,13 @@
 httpx
 python-dotenv
-google-genai
 langchain
 langchain-groq
 langchain-community
 langchain-tavily
-streamlit
+langchain-huggingface
+langchain-chroma
 chromadb
+sentence-transformers
+langgraph
+streamlit
+pytest
