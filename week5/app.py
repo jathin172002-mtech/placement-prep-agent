@@ -74,7 +74,8 @@ def research_company(company, role):
     st.session_state.total_tokens += tokens
     return parse_json(raw)
 
-def generate_questions(company, role, profile):
+@st.cache_data
+def generate_questions(company, role, profile_str):
     prompt = ChatPromptTemplate.from_template(
         "Generate 10 interview questions for {role} at {company}.\n"
         "Profile: {profile}\n"
@@ -84,9 +85,9 @@ def generate_questions(company, role, profile):
     result = chain.invoke({
         "company": company,
         "role": role,
-        "profile": json.dumps(profile)
+        "profile": profile_str
     })
-    tokens = estimate_tokens(json.dumps(profile) + result)
+    tokens = estimate_tokens(profile_str + result)
     st.session_state.total_tokens += tokens
     return clean(result)
 
@@ -178,7 +179,7 @@ if page == "Research":
                     try:
                         profile = research_company(company, role)
                         st.write("Generating questions...")
-                        questions = generate_questions(company, role, profile)
+                        questions = generate_questions(company, role, json.dumps(profile))
                         status.update(label="Research complete!", state="complete")
                         data = {"profile": profile, "questions": questions}
                         st.session_state.researched_companies[key] = data
