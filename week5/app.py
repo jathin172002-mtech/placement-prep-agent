@@ -1,4 +1,11 @@
+import os
 import sentry_sdk
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    traces_sample_rate=1.0,
+)
+
 import streamlit as st
 import json
 from langchain_groq import ChatGroq
@@ -9,11 +16,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 from pydantic import BaseModel, Field
 from typing import Literal
 from dotenv import load_dotenv
-
-sentry_sdk.init(
-    dsn="https://a00924a89802df29f0db1ab7add3ca73@o4511535825158144.ingest.us.sentry.io/4511535843704832",
-    traces_sample_rate=1.0,
-)
 
 load_dotenv()
 
